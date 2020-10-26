@@ -1,0 +1,124 @@
+class f1 extends Thread{
+    private double moj_wynik;
+    private double x;
+    public f1(double x){
+        this.x = x;
+    } 
+    public void run(){
+        moj_wynik = Math.sin(x);
+    }
+    public double getWynik(){
+        return moj_wynik;
+    }
+}
+class mProstokaty{
+    public static double oblicz(double poczatek, double koniec, int n){
+        double dx = (koniec - poczatek) / n;
+        f1[] tab = new f1[n];
+        for (int i=0; i<n; i++){
+            tab[i] = new f1(dx*(i+1));
+            tab[i].start();
+        }
+        double moj_wynik = 0;
+        for (int i=0; i<n; i++){
+            try
+            {
+                tab[i].join();}
+            catch(InterruptedException e)
+            {
+                e.printStackTrace();}
+            moj_wynik = moj_wynik + tab[i].getWynik();
+        }
+        moj_wynik = moj_wynik * dx;
+        return moj_wynik;}
+}
+class mSimpson
+{
+    public static double oblicz(double poczatek, double koniec, int n){
+        double dx = (koniec - poczatek) / n;
+        double wynik = 0;
+        f1 f0 = new f1(poczatek);
+        f1 fn = new f1(koniec);
+        f0.start();
+        fn.start();
+        f1 [] fi = new f1[n-1];
+        for (int i=1; i<=n-1; i++){
+            double x = poczatek + i * dx;
+            fi[i-1] = new f1(x);
+            fi[i-1].start();
+        }
+        f1 [] fti = new f1[n];
+        for (int i=1; i<=n; i++){
+            double a = poczatek + (i-1) * dx;
+            double b = poczatek + (i+1) * dx;
+            double x = (a + b) / 2;
+            fti[i-1] = new f1(x);
+            fti[i-1].start();
+        }
+        try
+        {
+            f0.join();
+            wynik = wynik + f0.getWynik();
+            fn.join();
+            wynik = wynik + fn.getWynik();
+            for (int i=0; i<fi.length; i++)
+            {
+                wynik = wynik + 2 * fi[i].getWynik();
+            }
+            for (int i=0; i<fti.length; i++)
+            {
+                wynik = wynik + 4 * fti[i].getWynik();
+            }
+        }
+        catch(InterruptedException e){
+            e.printStackTrace();
+        }
+        wynik = dx/6 * wynik;
+        return wynik;
+    }
+}
+class mTrapezy
+{
+    public static double oblicz(double poczatek, double koniec, int n){
+        double dx = (koniec - poczatek) / n;
+        f1[] tab = new f1[n+1];
+        double wynik = 0;
+        for (int i=0; i<n+1; i++)
+        {
+            double x = poczatek + dx * i;
+            f1 f = new f1(x);
+            f.start();
+            tab[i] = f;
+        }
+        for (int i=0; i<n+1; i++)
+        {
+            try
+            {
+                tab[i].join();
+                if (i==0 || i==n)
+                {
+                    wynik = wynik + tab[i].getWynik()/2;
+                }
+                else
+                {
+                    wynik = wynik + tab[i].getWynik();
+                }
+            }
+            catch(InterruptedException e){
+                e.printStackTrace();
+            }
+        }
+        return wynik * dx;
+    }
+}
+public class c1
+{
+    public static void main(String[] args){
+        double wynik1 = mProstokaty.oblicz(0, Math.PI, 3000);
+        double wynik2 = mSimpson.oblicz(0, Math.PI, 3000);
+        double wynik3 = mTrapezy.oblicz(0, Math.PI, 3000);
+        System.out.println(wynik1);
+        System.out.println(wynik2);
+        System.out.println(wynik3);
+    }
+}
