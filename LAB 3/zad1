@@ -1,0 +1,195 @@
+import java.util.Scanner;
+import java.util.concurrent.Semaphore ;
+import java.util.Random;
+
+public class Main {
+    public static void main(String[] args)
+    {
+        System.out.println("Podaj liczbe od 1 do 3 sugerujaca ktory algorytm chcesz uzyc: ");
+        Scanner s = new Scanner(System.in);
+        int x = s.nextInt();
+        System.out.println("Podaj ilość filozofów w problemie (liczba z przedzialu 2,200): ");
+        Scanner scanner = new Scanner(System.in);
+        int ilosc = scanner.nextInt();
+
+        switch (x)
+        {
+            case 1:
+                Filozof1 filozof1 = new Filozof1(1);
+                filozof1.ustaw(ilosc);
+                filozof1.rozpocznij();
+                break;
+            case 2:
+                Filozof2 filozof2 = new Filozof2(1);
+                filozof2.ustaw(ilosc);
+                filozof2.rozpocznij();
+                break;
+            case 3:
+                Filozof3 filozof3 = new Filozof3(1);
+                filozof3.ustaw(ilosc);
+                filozof3.rozpocznij();
+                break;
+            default:
+                System.out.println("Podano zły argument!");
+                break;
+        }
+    }
+}
+class Filozof1 extends Thread {
+    static int MAX;
+    static Semaphore [] tab  ;
+    int mojNum;
+    public Filozof1 (int nr) {
+        mojNum = nr ;
+    }
+
+    public void ustaw(int ilosc){
+        MAX = ilosc;
+        tab = new Semaphore [MAX];
+    }
+
+    public void run ( ) {
+        while ( true ) {
+
+            System.out.println( "Mysle -> " + mojNum) ;
+            try {
+                Thread.sleep((long)(7000 * Math.random()));
+            } catch ( InterruptedException e ) {
+            }
+            tab[mojNum].acquireUninterruptibly();
+            tab[ (mojNum+1)%MAX].acquireUninterruptibly();
+            // tutaj jedzenie
+            System.out.println( "Zaczyna jedzonko "+mojNum);
+            try {
+                Thread.sleep((long)(5000 * Math.random()));
+            } catch ( InterruptedException e ) {
+            }
+            System.out.println ( "Konczy jedzonko "+mojNum);
+            tab[mojNum].release( );
+            tab[ (mojNum+1)%MAX].release( );
+        }
+    }
+    public void rozpocznij() {
+        for ( int i =0; i<MAX; i++) {
+            tab[i]= new Semaphore ( 1 ) ;
+        }
+        for (int i =0; i<MAX; i++) {
+            new Filozof1(i).start();
+        }
+    }
+}
+
+class Filozof2 extends Thread {
+    static int MAX;
+    static Semaphore [] tab;
+    int mojNum;
+    public Filozof2 ( int nr ) {
+        mojNum=nr ;
+    }
+
+    public void ustaw(int ilosc){
+        MAX = ilosc;
+        tab = new Semaphore [MAX];
+    }
+
+    public void run ( ) {
+        while ( true ) {
+
+            System.out.println ( "Mysle -> " + mojNum) ;
+            try {
+                Thread.sleep ( ( long ) (5000 * Math.random( ) ) ) ;
+            } catch ( InterruptedException e ) {
+            }
+            if (mojNum == 0) {
+                tab[ (mojNum+1)%MAX].acquireUninterruptibly ( ) ;
+                tab[mojNum].acquireUninterruptibly ( ) ;
+            } else {
+                tab[mojNum].acquireUninterruptibly ( ) ;
+                tab[ (mojNum+1)%MAX].acquireUninterruptibly ( ) ;
+            }
+
+            System.out.println ( "Zaczyna jedzonko "+mojNum) ;
+            try {
+                Thread.sleep ( ( long ) (3000 * Math.random( ) ) ) ;
+            } catch ( InterruptedException e ) {
+            }
+            System.out.println ( "Konczy jedzonko "+mojNum) ;
+            tab[mojNum].release ( ) ;
+            tab[ (mojNum+1)%MAX].release ( ) ;
+        }
+    }
+    public void rozpocznij(){
+        System.out.println("");
+        for ( int i =0; i<MAX; i++) {
+            tab[ i ]=new Semaphore ( 1 ) ;
+        }
+        for ( int i =0; i<MAX; i++) {
+            new Filozof2(i).start();
+        }
+    }
+}
+
+
+class Filozof3 extends Thread {
+    static int MAX;
+    static Semaphore [] tab = new Semaphore [MAX] ;
+    int mojNum;
+    Random losuj ;
+
+    public Filozof3(int nr){
+        mojNum=nr ;
+        losuj = new Random(mojNum) ;
+    }
+
+    public void ustaw(int ilosc){
+        MAX = ilosc;
+        tab = new Semaphore [MAX];
+    }
+
+    public void run (){
+        while ( true ) {
+            System.out.println ( "mysle - " + mojNum) ;
+            try {
+                Thread.sleep((long)(5000 * Math.random())) ;
+            } catch ( InterruptedException e ){
+            }
+            int strona = losuj.nextInt ( 2 ) ;
+            boolean podnioslDwaWidelce = false ;
+            do {
+                if ( strona == 0) {
+                    tab [mojNum].acquireUninterruptibly();
+                    if(!(tab[(mojNum+1)%MAX].tryAcquire())){
+                        tab[mojNum].release ( ) ;
+                    } else {
+                        podnioslDwaWidelce = true ;
+                    }
+                } else {
+                    tab[(mojNum+1)%MAX].acquireUninterruptibly();
+                    if (!(tab[mojNum].tryAcquire())){
+                        tab[(mojNum+1)%MAX].release();
+                    } else {
+                        podnioslDwaWidelce = true ;
+                    }
+                }
+            } while( podnioslDwaWidelce == false ) ;
+            System.out.println ( "Zaczyna jedzonko "+mojNum);
+
+            try {
+                Thread.sleep(( long )(3000 * Math.random( )));
+            }
+            catch( InterruptedException e ) {
+            }
+            System.out.println( "Konczy jedzonko "+mojNum);
+            tab[mojNum].release() ;
+            tab[(mojNum+1)%MAX].release() ;
+        }
+    }
+    public void rozpocznij(){
+        for( int i =0; i<MAX; i++) {
+            tab[ i ]= new Semaphore( 1 );
+        }
+        for( int i =0; i<MAX; i++) {
+            new Filozof3(i).start();
+        }
+    }
+}
