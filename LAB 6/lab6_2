@@ -3,11 +3,14 @@
 #include <math.h>
 #include "mpi.h"
 
-int funkcja(int x){
+
+int funkcja(int x)
+{
 	return x * x;
 }
 
-int main(int argc, char **argv){
+int main(int argc, char **argv)
+{
 
 	int p,n;
 	int tag = 50;
@@ -25,21 +28,26 @@ int main(int argc, char **argv){
 	MPI_Comm_size(MPI_COMM_WORLD, &n);
 	MPI_Status status;
 
-	if(p == n - 1){
+	if(p == n - 1)
+	{
 		suma = suma + funkcja(a + (p * h) + 1);
 		MPI_Send(&suma, 1, MPI_DOUBLE, p - 1, tag, MPI_COMM_WORLD);
 	}
-	if((p >= 0) && (p < n - 1)){
+	if((p >= 0) && (p < n - 1))
+	{
 		MPI_Recv(&suma, 1, MPI_DOUBLE, p + 1, tag, MPI_COMM_WORLD, &status);
 		suma = suma + funkcja(a + ((p + 1) * h));
 		if(p != 0){
 			MPI_Send(&suma, 1, MPI_DOUBLE, p - 1, tag, MPI_COMM_WORLD);
 		}
-		else {
+		
+		else 
+		{
 			suma = suma + (funkcja(a) + funkcja(b)) / 2;
 			printf("Przyblizona wartosc calki: %f \n", suma);
 		}
 	}
+	
 	MPI_Finalize();
 	return 0;
 }
