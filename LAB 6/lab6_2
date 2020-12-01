@@ -1,0 +1,45 @@
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#include "mpi.h"
+
+int funkcja(int x){
+	return x * x;
+}
+
+int main(int argc, char **argv){
+
+	int p,n;
+	int tag = 50;
+	double a, b, h, n1, suma;
+	a = 1;
+	b = 3;
+
+	n1 = 3;
+	h = (b - a) / n1;
+
+	suma = 0;
+
+	MPI_Init(&argc, &argv);
+	MPI_Comm_rank(MPI_COMM_WORLD, &p);
+	MPI_Comm_size(MPI_COMM_WORLD, &n);
+	MPI_Status status;
+
+	if(p == n - 1){
+		suma = suma + funkcja(a + (p * h) + 1);
+		MPI_Send(&suma, 1, MPI_DOUBLE, p - 1, tag, MPI_COMM_WORLD);
+	}
+	if((p >= 0) && (p < n - 1)){
+		MPI_Recv(&suma, 1, MPI_DOUBLE, p + 1, tag, MPI_COMM_WORLD, &status);
+		suma = suma + funkcja(a + ((p + 1) * h));
+		if(p != 0){
+			MPI_Send(&suma, 1, MPI_DOUBLE, p - 1, tag, MPI_COMM_WORLD);
+		}
+		else {
+			suma = suma + (funkcja(a) + funkcja(b)) / 2;
+			printf("Przyblizona wartosc calki: %f \n", suma);
+		}
+	}
+	MPI_Finalize();
+	return 0;
+}
